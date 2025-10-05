@@ -110,6 +110,13 @@ export default function HomePage() {
     localStorage.setItem('customCards', JSON.stringify(updatedCards));
   };
 
+  // 카드 삭제 로직
+  const handleDeleteCard = (cardId: string) => {
+    const updatedCards = customCards.filter(card => card.id !== cardId);
+    setCustomCards(updatedCards);
+    localStorage.setItem('customCards', JSON.stringify(updatedCards));
+  };
+
   // 날씨 아이콘 이모지 반환 함수
   const getWeatherEmoji = (condition: string) => {
     const emojiMap: { [key: string]: string } = {
@@ -146,17 +153,8 @@ export default function HomePage() {
         onCalendarClick={() => setIsCalendarSheetOpen(true)}
         onNotificationClick={() => setIsNotificationSheetOpen(true)}
       />
-      {isSidebarOpen && (
-        <div className='fixed inset-0 z-[100]'>
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="fixed top-32 right-4 bg-blue-500 text-white p-4 rounded-lg z-[200]"
-          >
-            사이드바 토글
-          </button>
-        </div>
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-      )}
       <main className="space-y-6 mt-4">
         {/* 현재 날씨 카드 */}
         <div
@@ -188,6 +186,7 @@ export default function HomePage() {
                   setSelectedWidgetId(card.type);
                   setIsWidgetSheetOpen(true);
                 }}
+                onDelete={() => handleDeleteCard(card.id)}
               />
             ))}
             <CustomCard
@@ -198,7 +197,6 @@ export default function HomePage() {
           </div>
         </section>
       </main>
-
 
       {/* 맞춤 위젯 상세 정보 Sheet (상단) */}
       <Sheet open={isWidgetSheetOpen} onOpenChange={setIsWidgetSheetOpen}>

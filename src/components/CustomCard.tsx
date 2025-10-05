@@ -1,7 +1,7 @@
 'use client';
 
-import { Plus, AlertTriangle, CheckCircle, XCircle, Heart, Plane, Mountain, Car, Activity } from 'lucide-react';
-import Link from 'next/link'; // next/link에서 Link를 import합니다.
+import { Plus, AlertTriangle, CheckCircle, XCircle, Heart, Plane, Mountain, Car, Activity, X } from 'lucide-react';
+import Link from 'next/link';
 
 interface CustomCardProps {
   type: string;
@@ -10,9 +10,10 @@ interface CustomCardProps {
   message?: string;
   action?: string;
   onClick?: () => void;
+  onDelete?: () => void;
 }
 
-export default function CustomCard({ type, title, status, message, action, onClick }: CustomCardProps) {
+export default function CustomCard({ type, title, status, message, action, onClick, onDelete }: CustomCardProps) {
 
   const getIcon = () => {
     switch (type) {
@@ -78,36 +79,49 @@ export default function CustomCard({ type, title, status, message, action, onCli
     );
   }
 
-  // 일반 정보 카드는 Link 컴포넌트로 감싸서 클릭 시 페이지 이동이 되도록 합니다.
+  // 일반 정보 카드
   return (
-    <Link href={`/widget/${type}`} className="block">
-      <div
-        className={`glass-dark rounded-2xl p-4 cursor-pointer transition-all duration-300 hover:scale-105 border ${getStatusColor()} aspect-square flex flex-col justify-between h-full`}
-      >
-        <div>
-          <div className="flex items-start justify-between mb-2">
-            <div className="flex items-center gap-2">
-              {getIcon()}
-              <span className="font-semibold text-md">{title}</span>
-            </div>
-            {getStatusIcon()}
-          </div>
+    <div
+      className={`glass-dark rounded-2xl p-4 cursor-pointer transition-all duration-300 hover:scale-105 border ${getStatusColor()} aspect-square flex flex-col justify-between h-full relative`}
+      onClick={onClick}
+    >
+      {/* 삭제 버튼 */}
+      {onDelete && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="absolute bottom-2 right-2 p-1 rounded-full bg-black/50 hover:bg-black/70 transition-colors z-10"
+          aria-label="삭제"
+        >
+          <X className="w-4 h-4 text-white" />
+        </button>
+      )}
 
-          {message && (
-            <div className="text-xs text-muted-foreground">
-              {status === 'warning' && '⚠️ '}
-              {status === 'danger' && '🚨 '}
-              {message}
-            </div>
-          )}
+      <div>
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex items-center gap-2">
+            {getIcon()}
+            <span className="font-semibold text-md">{title}</span>
+          </div>
+          {getStatusIcon()}
         </div>
 
-        {action && (
-          <div className="text-xs font-medium text-primary mt-1">
-            {action}
+        {message && (
+          <div className="text-xs text-muted-foreground">
+            {status === 'warning' && '⚠️ '}
+            {status === 'danger' && '🚨 '}
+            {message}
           </div>
         )}
       </div>
-    </Link>
+
+      {action && (
+        <div className="text-xs font-medium text-primary mt-1">
+          {action}
+        </div>
+      )}
+    </div>
   );
 }
