@@ -1,138 +1,118 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Header from '@/components/Header';
-import WeatherCard from '@/components/WeatherCard';
-import HourlyForecast from '@/components/weather/HourlyForecast';
-import DailyForecast from '@/components/weather/DailyForecast';
-import DetailedConditions from '@/components/weather/DetailedConditions';
-import { useLocation } from '@/hooks/useLocation';
-import { WeatherAPI, WeatherForecastResponse } from '@/lib/api/weather';
 
-export default function Home() {
-  const { location, loading: locationLoading, error: locationError, requestLocation } = useLocation();
+// FSD Layers
+import { useLocationStore } from '@/entities/location/model/location-store';
+import { useDeviceLocation } from '@/entities/location/model/use-device-location';
+import { WeatherAPI } from '@/entities/weather/api/weather-api';
+import { WeatherForecastResponse } from '@/entities/weather/model/types';
+import { Header } from '@/widgets/header/ui/Header';
+import { HourlyForecast } from '@/widgets/weather/ui/HourlyForecast';
+import { DailyForecast } from '@/widgets/weather/ui/DailyForecast';
+import { DetailedConditions } from '@/widgets/weather/ui/DetailedConditions';
+import { PersonalizedHealth } from '@/widgets/health/ui/PersonalizedHealth';
+import { Loader } from '@/shared/ui/loader';
+import { Button } from '@/shared/ui/button';
+
+export default function HomePage() {
+  const {
+    location: deviceLocation,
+    loading: locationLoading,
+    error: locationError,
+    requestLocation,
+  } = useDeviceLocation();
+  const {
+    latitude: selectedLat,
+    longitude: selectedLon,
+    clearLocation,
+  } = useLocationStore();
+
   const [forecast, setForecast] = useState<WeatherForecastResponse | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (location) {
-      fetchWeather();
+    if (selectedLat && selectedLon) {
+      fetchWeather(selectedLat, selectedLon);
+      clearLocation();
+    } else if (deviceLocation) {
+      fetchWeather(deviceLocation.lat, deviceLocation.lon);
     }
-  }, [location]);
+  }, [deviceLocation, selectedLat, selectedLon]);
 
-  const fetchWeather = async () => {
-    if (!location) return;
-
+  const fetchWeather = async (lat: number, lon: number) => {
     setLoading(true);
     setError(null);
-
     try {
-      const data = await WeatherAPI.getWeatherByCoords(location.lat, location.lon);
+      const data = await WeatherAPI.getWeatherByCoords(lat, lon);
       setForecast(data);
     } catch (err) {
       setError('날씨 정보를 불러오는데 실패했습니다.');
-      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearch = () => {
-    console.log('Search clicked');
-  };
-
-  const handleMenu = () => {
-    console.log('Menu clicked');
-  };
-
-  const handleCalendar = () => {
-    console.log('Calendar clicked');
-  };
-
-  const handleNotification = () => {
-    console.log('Notification clicked');
-  };
-
-  if (locationLoading || loading) {
-    return (
-      <div className="min-h-screen weather-bg cloudy flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">날씨 정보를 불러오는 중...</p>
-        </div>
-      </div>
-    );
+  if ((locationLoading && !selectedLat) || loading) {
+    return <Loader />;
   }
 
   if (locationError || error) {
     return (
-      <div className="min-h-screen weather-bg cloudy flex items-center justify-center">
+      <div className="min-h-screen weather-bg cloudy flex items-center justify-center p-4">
         <div className="text-center">
           <p className="text-destructive mb-4">{locationError || error}</p>
-          <button
-            onClick={requestLocation}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-          >
-            다시 시도
-          </button>
+          <Button onClick={requestLocation}>위치 권한 재요청</Button>
         </div>
       </div>
     );
   }
 
-  if (!forecast) {
-    return null;
-  }
+  if (!forecast) return <Loader message="날씨 데이터가 없습니다." />;
 
   const current = forecast.list[0];
 
   return (
-    <div className="min-h-screen weather-bg cloudy">
+    <div className="flex flex-col flex-1">
       <Header
-        onSearch={handleSearch}
-        onMenu={handleMenu}
-        onCalendar={handleCalendar}
-        onNotification={handleNotification}
+        onMenuClick={() => {}}
+        onCalendarClick={() => {}}
+        onNotificationClick={() => {}}
       />
-
-      <main className="px-4 py-6 space-y-6 max-w-md mx-auto sm:max-w-lg md:max-w-2xl lg:max-w-4xl overflow-y-auto">
-        {/* 기본 날씨 카드 */}
+      <main className="flex-1 overflow-y-auto px-4 py-6 space-y-6 max-w-md mx-auto sm:max-w-lg md:max-w-2xl lg:max-w-4xl">
         <div className="glass-dark rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                📍 {forecast.city.name}, {forecast.city.country}
-              </span>
-            </div>
+          <span className="text-sm text-muted-foreground">
+            📍 {forecast.city.name}, {forecast.city.country}
+          </span>
           </div>
-
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-5xl font-bold">{Math.round(current.main.temp)}°C</div>
-              <div className="text-muted-foreground mt-1">{current.weather[0].description}</div>
+              <div className="text-5xl font-bold">{current.main.temp}°C</div>
+              <div className="text-muted-foreground mt-1 capitalize">
+                {current.weather[0].description}
+              </div>
             </div>
-            <div className="text-right">
-              <div className="text-sm text-muted-foreground">체감 {Math.round(current.main.feels_like)}°C</div>
-              <div className="text-sm text-muted-foreground">
-                H:{Math.round(current.main.temp_max)}° L:{Math.round(current.main.temp_min)}°
+            <div className="text-right text-sm text-muted-foreground">
+              <div>체감 {current.main.feels_like}°C</div>
+              <div>
+                최고:{current.main.temp_max}° 최저:{current.main.temp_min}°
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="flex items-center justify-between mt-4 text-sm text-muted-foreground">
-            <div>💧 {current.main.humidity}%</div>
-            <div>🌬️ {current.wind.speed}m/s</div>
+        <HourlyForecast forecast={forecast.list} />
+        <DailyForecast forecast={forecast.list} />
+
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold px-2">👩‍⚕️ 맞춤 건강 정보</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <PersonalizedHealth current={current} />
           </div>
         </div>
 
-        {/* 시간별 예보 */}
-        <HourlyForecast forecast={forecast.list} />
-
-        {/* 10일 예보 */}
-        <DailyForecast forecast={forecast.list} />
-
-        {/* 상세 정보 */}
         <DetailedConditions current={current} city={forecast.city} />
       </main>
     </div>
