@@ -9,7 +9,9 @@ interface HeaderProps {
   onNotificationClick: () => void;
 }
 
+
 export function Header({
+
   onMenuClick,
   onCalendarClick,
   onNotificationClick,

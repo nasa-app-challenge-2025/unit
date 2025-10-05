@@ -92,7 +92,6 @@ export function DetailedConditions({ current, city }: DetailedConditionsProps) {
           </div>
         </div>
         <div>
-          u{' '}
           <div className='flex items-center gap-2 mb-3 text-muted-foreground'>
             <Eye className='w-4 h-4' />
             <span>구름 & 가시거리</span>

@@ -24,3 +24,6 @@ export class PersonaAPI {
     return response.json();
   }
 }
+
+export type PersonaScore = { /* 정의 */ };
+export type PersonaScoreRequest = { /* 정의 */ };
